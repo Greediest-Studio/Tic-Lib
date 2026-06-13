@@ -1,5 +1,7 @@
 package com.smd.ticlib;
 
+import com.smd.ticlib.stats.TicArmorStatModifier;
+import com.smd.ticlib.stats.TicToolStatModifier;
 import com.smd.ticlib.util.TicArmorTraitCache;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -17,6 +19,8 @@ public class TicLib {
 
     @Mod.EventHandler
     public void preInit(FMLPreInitializationEvent event) {
+        TicToolStatModifier.INSTANCE.getIdentifier();
+        TicArmorStatModifier.INSTANCE.getIdentifier();
         MinecraftForge.EVENT_BUS.register(TicArmorTraitCache.INSTANCE);
         LOGGER.info("Hello From {}!", Tags.MOD_NAME);
     }

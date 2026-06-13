@@ -119,83 +119,33 @@ public final class TicTool {
     }
 
     @ZenMethod
-    public static boolean addMiningSpeed(IItemStack stack, float amount, String token) {
-        return patchMiningSpeed(stack, amount, token);
+    public static String[] getStats(IItemStack stack) {
+        return TicToolStats.getStats(toStackCopy(stack));
     }
 
     @ZenMethod
-    public static boolean patchMiningSpeed(IItemStack stack, float amount, String token) {
-        return TicToolStats.patchMiningSpeed(toMutableStack(stack), amount, token);
+    public static boolean hasStat(IItemStack stack, String statName) {
+        return TicToolStats.hasStat(toStackCopy(stack), statName);
     }
 
     @ZenMethod
-    public static boolean addAttack(IItemStack stack, float amount, String token) {
-        return patchAttack(stack, amount, token);
+    public static float getFloatStat(IItemStack stack, String statName) {
+        return TicToolStats.getFloatStat(toStackCopy(stack), statName);
     }
 
     @ZenMethod
-    public static boolean patchAttack(IItemStack stack, float amount, String token) {
-        return TicToolStats.patchAttack(toMutableStack(stack), amount, token);
+    public static int getIntStat(IItemStack stack, String statName) {
+        return TicToolStats.getIntStat(toStackCopy(stack), statName);
     }
 
     @ZenMethod
-    public static boolean addFreeModifiers(IItemStack stack, int amount, String token) {
-        return patchFreeModifiers(stack, amount, token);
+    public static boolean addStat(IItemStack stack, String statName, float amount, String token) {
+        return TicToolStats.addStat(toMutableStack(stack), statName, amount, token);
     }
 
     @ZenMethod
-    public static boolean patchFreeModifiers(IItemStack stack, int amount, String token) {
-        return TicToolStats.patchFreeModifiers(toMutableStack(stack), amount, token);
-    }
-
-    @ZenMethod
-    public static boolean addDefense(IItemStack stack, float amount, String token) {
-        return patchDefense(stack, amount, token);
-    }
-
-    @ZenMethod
-    public static boolean patchDefense(IItemStack stack, float amount, String token) {
-        return TicToolStats.patchDefense(toMutableStack(stack), amount, token);
-    }
-
-    @ZenMethod
-    public static boolean addToughness(IItemStack stack, float amount, String token) {
-        return patchToughness(stack, amount, token);
-    }
-
-    @ZenMethod
-    public static boolean patchToughness(IItemStack stack, float amount, String token) {
-        return TicToolStats.patchToughness(toMutableStack(stack), amount, token);
-    }
-
-    @ZenMethod
-    public static boolean addHarvestLevel(IItemStack stack, int amount, String token) {
-        return patchHarvestLevel(stack, amount, token);
-    }
-
-    @ZenMethod
-    public static boolean patchHarvestLevel(IItemStack stack, int amount, String token) {
-        return TicToolStats.patchHarvestLevel(toMutableStack(stack), amount, token);
-    }
-
-    @ZenMethod
-    public static boolean addDrawSpeed(IItemStack stack, float amount, String token) {
-        return patchDrawSpeed(stack, amount, token);
-    }
-
-    @ZenMethod
-    public static boolean patchDrawSpeed(IItemStack stack, float amount, String token) {
-        return TicToolStats.patchDrawSpeed(toMutableStack(stack), amount, token);
-    }
-
-    @ZenMethod
-    public static boolean addAttackSpeedMultiplier(IItemStack stack, float amount, String token) {
-        return patchAttackSpeedMultiplier(stack, amount, token);
-    }
-
-    @ZenMethod
-    public static boolean patchAttackSpeedMultiplier(IItemStack stack, float amount, String token) {
-        return TicToolStats.patchAttackSpeedMultiplier(toMutableStack(stack), amount, token);
+    public static boolean addIntStat(IItemStack stack, String statName, int amount, String token) {
+        return TicToolStats.addIntStat(toMutableStack(stack), statName, amount, token);
     }
 
     @ZenMethod
