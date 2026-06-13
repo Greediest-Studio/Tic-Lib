@@ -35,6 +35,14 @@ public final class TicStatPatches {
         return stats != null && isValidStatName(statName) && isNumeric(stats.getTag(statName));
     }
 
+    public static boolean addNumericStat(NBTTagCompound stats, String statName, double amount) {
+        if (!hasNumericStat(stats, statName)) {
+            return false;
+        }
+        addNumeric(stats, statName, amount);
+        return true;
+    }
+
     static boolean addBonus(NBTTagCompound modifierTag, String identifier, int color, String statName, double amount, String token) {
         if (!isValidStatName(statName) || token == null || token.trim().isEmpty() || hasToken(modifierTag, token)) {
             return false;

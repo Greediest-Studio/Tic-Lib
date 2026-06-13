@@ -3,7 +3,7 @@ package com.smd.ticlib.stats;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
-import slimeknights.tconstruct.library.modifiers.IModifier;
+import net.minecraft.nbt.NBTTagString;
 import slimeknights.tconstruct.library.utils.TagUtil;
 import slimeknights.tconstruct.library.utils.TinkerUtil;
 
@@ -12,7 +12,7 @@ final class TicStatModifierBridge {
     private TicStatModifierBridge() {
     }
 
-    static boolean addStat(ItemStack stack, IModifier modifier, String identifier, int color, String statName, double amount, String token) {
+    static boolean addStat(ItemStack stack, String identifier, int color, String statName, double amount, String token) {
         if (stack == null || stack.isEmpty() || token == null || token.trim().isEmpty()) {
             return false;
         }
@@ -38,8 +38,21 @@ final class TicStatModifierBridge {
             modifiers.appendTag(modifierTag);
         }
         TagUtil.setModifiersTagList(root, modifiers);
-        modifier.apply(root);
+        addBaseModifier(root, identifier);
+
+        NBTTagCompound updatedStats = TagUtil.getToolTag(root).copy();
+        TicStatPatches.addNumericStat(updatedStats, statName, amount);
+        TagUtil.setToolTag(root, updatedStats);
         stack.setTagCompound(root);
         return true;
+    }
+
+    private static void addBaseModifier(NBTTagCompound root, String identifier) {
+        if (TinkerUtil.hasModifier(root, identifier)) {
+            return;
+        }
+        NBTTagList baseModifiers = TagUtil.getBaseModifiersTagList(root);
+        baseModifiers.appendTag(new NBTTagString(identifier));
+        TagUtil.setBaseModifiersTagList(root, baseModifiers);
     }
 }

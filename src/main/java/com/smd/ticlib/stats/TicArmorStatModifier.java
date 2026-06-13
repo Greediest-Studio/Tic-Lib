@@ -41,6 +41,6 @@ public final class TicArmorStatModifier extends ArmorModifierTrait {
         if (!canApplyCustom(stack)) {
             return false;
         }
-        return TicStatModifierBridge.addStat(stack, this, getModifierIdentifier(), COLOR, statName, amount, token);
+        return TicStatModifierBridge.addStat(stack, getModifierIdentifier(), COLOR, statName, amount, token);
     }
 }

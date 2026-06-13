@@ -27,7 +27,14 @@ public final class TicToolTraits {
         if (!TicToolStacks.isTicTarget(stack)) {
             return TicToolNbt.EMPTY_STRINGS;
         }
-        return TicToolNbt.readStringList(TagUtil.getTraitsTagList(stack));
+        return getTraits(TagUtil.getTagSafe(stack));
+    }
+
+    public static String[] getTraits(NBTTagCompound root) {
+        if (root == null || root.isEmpty()) {
+            return TicToolNbt.EMPTY_STRINGS;
+        }
+        return TicToolNbt.readStringList(TagUtil.getTraitsTagList(root));
     }
 
     public static boolean hasTrait(ItemStack stack, String traitId) {
@@ -35,6 +42,18 @@ public final class TicToolTraits {
             return false;
         }
         for (String trait : getTraits(stack)) {
+            if (traitId.equals(trait)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static boolean hasTrait(NBTTagCompound root, String traitId) {
+        if (!isValidTraitId(traitId)) {
+            return false;
+        }
+        for (String trait : getTraits(root)) {
             if (traitId.equals(trait)) {
                 return true;
             }
@@ -76,6 +95,64 @@ public final class TicToolTraits {
         return true;
     }
 
+    public static boolean applyBuildTrait(NBTTagCompound root, String traitId, int color, int level) {
+        TraitHandle handle = resolveTrait(traitId);
+        if (root == null || handle == null || hasTrait(root, traitId)) {
+            return false;
+        }
+        if (!root.hasKey(Tags.TOOL_TRAITS, 9)) {
+            root.setTag(Tags.TOOL_TRAITS, new NBTTagList());
+        }
+        if (!root.hasKey(Tags.TOOL_MODIFIERS, 9)) {
+            root.setTag(Tags.TOOL_MODIFIERS, new NBTTagList());
+        }
+
+        ToolBuilder.addTrait(root, handle.trait, color);
+        if (level > DEFAULT_LEVEL) {
+            rebuildModifierEntry(root, handle.modifierIdentifier, collectTraitsByModifier(root, handle.modifierIdentifier), color);
+        }
+        return hasTrait(root, traitId);
+    }
+
+    public static String[] getBaseModifiers(NBTTagCompound root) {
+        if (root == null || root.isEmpty()) {
+            return TicToolNbt.EMPTY_STRINGS;
+        }
+        return TicToolNbt.readStringList(TagUtil.getBaseModifiersTagList(root));
+    }
+
+    public static boolean hasBaseModifier(NBTTagCompound root, String traitOrModifierId) {
+        String modifierIdentifier = resolveModifierIdentifier(traitOrModifierId);
+        return root != null && modifierIdentifier != null
+                && TicToolNbt.stringListContains(TagUtil.getBaseModifiersTagList(root), modifierIdentifier);
+    }
+
+    public static boolean addBaseModifier(NBTTagCompound root, String traitOrModifierId) {
+        String modifierIdentifier = resolveModifierIdentifier(traitOrModifierId);
+        if (root == null || modifierIdentifier == null) {
+            return false;
+        }
+        NBTTagList modifiers = TagUtil.getBaseModifiersTagList(root);
+        if (TicToolNbt.stringListContains(modifiers, modifierIdentifier)) {
+            return true;
+        }
+        TagUtil.setBaseModifiersTagList(root, TicToolNbt.copyStringListAppending(modifiers, modifierIdentifier));
+        return true;
+    }
+
+    public static boolean removeBaseModifier(NBTTagCompound root, String traitOrModifierId) {
+        String modifierIdentifier = resolveModifierIdentifier(traitOrModifierId);
+        if (root == null || modifierIdentifier == null) {
+            return false;
+        }
+        NBTTagList modifiers = TagUtil.getBaseModifiersTagList(root);
+        if (!TicToolNbt.stringListContains(modifiers, modifierIdentifier)) {
+            return false;
+        }
+        TagUtil.setBaseModifiersTagList(root, TicToolNbt.copyStringListWithout(modifiers, modifierIdentifier));
+        return true;
+    }
+
     public static boolean removeTrait(ItemStack stack, String traitId) {
         return removeRegisteredTrait(stack, traitId);
     }
@@ -97,6 +174,22 @@ public final class TicToolTraits {
             rebuildModifierEntry(root, handle.modifierIdentifier, remainingTraits, color);
         }
         stack.setTagCompound(root);
+        return true;
+    }
+
+    public static boolean removeBuildTrait(NBTTagCompound root, String traitId) {
+        TraitHandle handle = resolveTrait(traitId);
+        if (root == null || handle == null || !hasTrait(root, traitId)) {
+            return false;
+        }
+
+        TagUtil.setTraitsTagList(root, TicToolNbt.copyStringListWithout(TagUtil.getTraitsTagList(root), traitId));
+        List<String> remainingTraits = collectTraitsByModifier(root, handle.modifierIdentifier);
+        if (remainingTraits.isEmpty()) {
+            TagUtil.setModifiersTagList(root, TicToolNbt.copyModifierListWithout(TagUtil.getModifiersTagList(root), handle.modifierIdentifier));
+        } else {
+            rebuildModifierEntry(root, handle.modifierIdentifier, remainingTraits, DEFAULT_COLOR);
+        }
         return true;
     }
 
@@ -154,6 +247,17 @@ public final class TicToolTraits {
         }
         AbstractTrait modifier = (AbstractTrait) TinkerRegistry.getModifier(traitId);
         return new TraitHandle(trait, modifier.getModifierIdentifier());
+    }
+
+    private static String resolveModifierIdentifier(String traitOrModifierId) {
+        TraitHandle handle = resolveTrait(traitOrModifierId);
+        if (handle != null) {
+            return handle.modifierIdentifier;
+        }
+        if (isValidTraitId(traitOrModifierId) && TinkerRegistry.getModifier(traitOrModifierId) != null) {
+            return traitOrModifierId;
+        }
+        return null;
     }
 
     private static List<String> collectTraitsByModifier(NBTTagCompound root, String modifierIdentifier) {
