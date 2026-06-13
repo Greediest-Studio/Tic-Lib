@@ -20,6 +20,18 @@ mods.ticlib.TicTool
 - Zen 层只负责类型转换和空对象保护，实际逻辑在 Java `util` 层
 - 非 `TiC` 工具或非 `ConArm` 护甲传入时，大多数查询方法会返回默认值，修改方法会返回 `false`
 
+## NBT 写入语义
+
+`TicLib` 把写入 API 分成两类：
+
+- 注册路径：`applyRegisteredTrait` / `removeRegisteredTrait` 只处理已经注册到 `TinkerRegistry` 的 trait，并同步 `Traits`、`Modifiers`、`Base.Modifiers`。这类数据会进入 TiC / ConArm 的原生重建流程，经过工具装配台重建时通常可以保留并重新应用。
+- 属性补丁：`patchMiningSpeed`、`patchAttack`、`patchDefense` 等方法直接修改当前物品的 `Stats` / `StatsOriginal`。它们适合脚本即时调整，但不是注册 modifier；如果之后经过工具装配台或其它流程触发原生重建，补丁数值可能被材料和 modifier 重算覆盖。
+
+兼容说明：
+
+- 旧方法名 `addTrait`、`removeTrait`、`withTrait`、`withoutTrait` 仍可使用，等价于对应的 registered trait 方法。
+- 旧属性方法名 `addMiningSpeed`、`addAttack` 等仍可使用，等价于对应的 `patch*` 方法。
+
 ## 查询方法
 
 ### `isTool`
@@ -128,7 +140,7 @@ mods.ticlib.TicTool.getArmorSlot(stack as IItemStack) as IEntityEquipmentSlot
 返回值：
 
 - 对应的 `IEntityEquipmentSlot`
-- 非护甲时返回空槽位对象
+- 非护甲时返回 `null`
 
 ### `getMaterials`
 
@@ -250,27 +262,28 @@ mods.ticlib.TicTool.getTraitLevel(stack as IItemStack, traitId as string) as int
 - 找到时返回等级
 - 找不到时返回 `1`
 
-### `addTrait`
+### `applyRegisteredTrait`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addTrait(stack as IItemStack, traitId as string, color as int, level as int) as bool
+mods.ticlib.TicTool.applyRegisteredTrait(stack as IItemStack, traitId as string, color as int, level as int) as bool
 ```
 
 说明：
 
 - 向物品追加一个已注册词条
 - 当前实现会先解析 `TinkerRegistry` 中的原生 trait，再按 TiC 标准 trait 应用流程写入
-- 会同步处理 `Traits`、`Modifiers`、`BaseModifiers` 对应关系
+- 会同步处理根 `Traits`、根 `Modifiers`、`Base.Modifiers` 对应关系
 - 默认拒绝重复添加同名词条
+- 这是推荐的注册路径 API；旧名 `addTrait` 是兼容别名
 
 参数：
 
 - `stack`：要修改的物品，必须是可变栈
 - `traitId`：词条标识符，必须是已注册 trait
 - `color`：写入的显示颜色，通常使用 `0xffffff` 这种 RGB 整数
-- `level`：目标等级，普通 trait 一般传 `1`
+- `level`：兼容参数。普通 trait 一般传 `1`；分级 trait 的等级仍以原生 trait / modifier 数据为准
 
 返回值：
 
@@ -279,23 +292,30 @@ mods.ticlib.TicTool.addTrait(stack as IItemStack, traitId as string, color as in
 
 注意：
 
-- `addTrait` 只接受已注册的 `TiC / ConArm` trait
+- `applyRegisteredTrait` 只接受已注册的 `TiC / ConArm` trait，不会动态创建新 trait
 - 对某些带特殊内部状态的复杂 trait，仍建议实机过工作台验证
 
-### `removeTrait`
+兼容别名：
+
+```zenscript
+mods.ticlib.TicTool.addTrait(stack as IItemStack, traitId as string, color as int, level as int) as bool
+```
+
+### `removeRegisteredTrait`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.removeTrait(stack as IItemStack, traitId as string) as bool
+mods.ticlib.TicTool.removeRegisteredTrait(stack as IItemStack, traitId as string) as bool
 ```
 
 说明：
 
 - 从物品中移除指定词条
 - 会同步清理 `Traits`
-- 若该词条对应的 modifier 已无剩余关联 trait，则会从 `Modifiers` 与 `BaseModifiers` 一并移除
+- 若该词条对应的 modifier 已无剩余关联 trait，则会从根 `Modifiers` 与 `Base.Modifiers` 一并移除
 - 若是共享同一 modifier 的分级 trait，则会按剩余 trait 重建 modifier 数据
+- 这是推荐的注册路径 API；旧名 `removeTrait` 是兼容别名
 
 参数：
 
@@ -307,43 +327,57 @@ mods.ticlib.TicTool.removeTrait(stack as IItemStack, traitId as string) as bool
 - `true`：移除成功
 - `false`：物品不适用、词条不存在，或输入无效
 
-### `withTrait`
+兼容别名：
+
+```zenscript
+mods.ticlib.TicTool.removeTrait(stack as IItemStack, traitId as string) as bool
+```
+
+### `withRegisteredTrait`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.withTrait(stack as IItemStack, traitId as string, color as int, level as int) as IItemStack
+mods.ticlib.TicTool.withRegisteredTrait(stack as IItemStack, traitId as string, color as int, level as int) as IItemStack
 ```
 
 说明：
 
-- 基于原物品副本添加词条
+- 基于原物品副本添加已注册词条
 - 原物品不会被污染
+- 旧名 `withTrait` 是兼容别名
 
 参数：
 
 - `stack`：原物品
 - `traitId`：要追加的词条
 - `color`：词条颜色
-- `level`：词条等级
+- `level`：兼容参数，普通 trait 传 `1`
 
 返回值：
 
 - 新副本
 - 输入为空时返回空物品
 
-### `withoutTrait`
+兼容别名：
+
+```zenscript
+mods.ticlib.TicTool.withTrait(stack as IItemStack, traitId as string, color as int, level as int) as IItemStack
+```
+
+### `withoutRegisteredTrait`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.withoutTrait(stack as IItemStack, traitId as string) as IItemStack
+mods.ticlib.TicTool.withoutRegisteredTrait(stack as IItemStack, traitId as string) as IItemStack
 ```
 
 说明：
 
-- 基于原物品副本移除词条
+- 基于原物品副本移除已注册词条
 - 原物品不会被污染
+- 旧名 `withoutTrait` 是兼容别名
 
 参数：
 
@@ -355,7 +389,15 @@ mods.ticlib.TicTool.withoutTrait(stack as IItemStack, traitId as string) as IIte
 - 新副本
 - 输入为空时返回空物品
 
-## 属性方法
+兼容别名：
+
+```zenscript
+mods.ticlib.TicTool.withoutTrait(stack as IItemStack, traitId as string) as IItemStack
+```
+
+## 属性补丁方法
+
+属性补丁方法都直接修改当前物品 NBT 中的 `Stats` 与 `StatsOriginal`。这些方法不会注册 TiC modifier，也不会把补丁写入 `Base.Modifiers`。如果物品之后经过工具装配台、部件替换、重建或其它原生重算流程，补丁数值可能被覆盖。
 
 ### `setBroken`
 
@@ -381,12 +423,12 @@ mods.ticlib.TicTool.setBroken(stack as IItemStack, broken as bool) as bool
 - `true`：设置成功
 - `false`：物品不适用
 
-### `addMiningSpeed`
+### `patchMiningSpeed`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addMiningSpeed(stack as IItemStack, amount as float, token as string) as bool
+mods.ticlib.TicTool.patchMiningSpeed(stack as IItemStack, amount as float, token as string) as bool
 ```
 
 说明：
@@ -394,6 +436,7 @@ mods.ticlib.TicTool.addMiningSpeed(stack as IItemStack, amount as float, token a
 - 增加工具挖掘速度
 - 同时更新 `Stats` 与 `StatsOriginal`
 - 仅对拥有该字段的 `TiC` 工具有效
+- 旧名 `addMiningSpeed` 是兼容别名
 
 参数：
 
@@ -406,18 +449,19 @@ mods.ticlib.TicTool.addMiningSpeed(stack as IItemStack, amount as float, token a
 - `true`：修改成功，或相同 token 已经应用过
 - `false`：物品不适用、字段不存在、token 无效
 
-### `addAttack`
+### `patchAttack`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addAttack(stack as IItemStack, amount as float, token as string) as bool
+mods.ticlib.TicTool.patchAttack(stack as IItemStack, amount as float, token as string) as bool
 ```
 
 说明：
 
 - 增加工具攻击力
 - 同时更新 `Stats` 与 `StatsOriginal`
+- 旧名 `addAttack` 是兼容别名
 
 参数：
 
@@ -430,18 +474,19 @@ mods.ticlib.TicTool.addAttack(stack as IItemStack, amount as float, token as str
 - `true`：修改成功，或同 token 已应用
 - `false`：物品不适用、字段不存在、token 无效
 
-### `addFreeModifiers`
+### `patchFreeModifiers`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addFreeModifiers(stack as IItemStack, amount as int, token as string) as bool
+mods.ticlib.TicTool.patchFreeModifiers(stack as IItemStack, amount as int, token as string) as bool
 ```
 
 说明：
 
 - 增加可用强化槽数量
 - 同时更新 `Stats` 与 `StatsOriginal`
+- 旧名 `addFreeModifiers` 是兼容别名
 
 参数：
 
@@ -454,12 +499,12 @@ mods.ticlib.TicTool.addFreeModifiers(stack as IItemStack, amount as int, token a
 - `true`：修改成功，或同 token 已应用
 - `false`：物品不适用、字段不存在、token 无效
 
-### `addDefense`
+### `patchDefense`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addDefense(stack as IItemStack, amount as float, token as string) as bool
+mods.ticlib.TicTool.patchDefense(stack as IItemStack, amount as float, token as string) as bool
 ```
 
 说明：
@@ -468,6 +513,7 @@ mods.ticlib.TicTool.addDefense(stack as IItemStack, amount as float, token as st
 - 仅对 `ConArm` 护甲有效
 - 写入时会按护甲槽位使用原生换算倍率
 - 同时更新 `Stats` 与 `StatsOriginal`
+- 旧名 `addDefense` 是兼容别名
 
 参数：
 
@@ -480,19 +526,20 @@ mods.ticlib.TicTool.addDefense(stack as IItemStack, amount as float, token as st
 - `true`：修改成功，或同 token 已应用
 - `false`：不是 `ConArm` 护甲、字段不存在、token 无效
 
-### `addToughness`
+### `patchToughness`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addToughness(stack as IItemStack, amount as float, token as string) as bool
+mods.ticlib.TicTool.patchToughness(stack as IItemStack, amount as float, token as string) as bool
 ```
 
 说明：
 
 - 增加韧性
-- 对 `ConArm` 护甲时走护甲原生 `ArmorNBT`
-- 对工具时走工具属性路径
+- 仅对 `ConArm` 护甲有效
+- 写入时走护甲原生 `ArmorNBT`
+- 旧名 `addToughness` 是兼容别名
 
 参数：
 
@@ -505,18 +552,19 @@ mods.ticlib.TicTool.addToughness(stack as IItemStack, amount as float, token as 
 - `true`：修改成功，或同 token 已应用
 - `false`：物品不适用、字段不存在、token 无效
 
-### `addHarvestLevel`
+### `patchHarvestLevel`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addHarvestLevel(stack as IItemStack, amount as int, token as string) as bool
+mods.ticlib.TicTool.patchHarvestLevel(stack as IItemStack, amount as int, token as string) as bool
 ```
 
 说明：
 
 - 增加工具采掘等级
 - 同时更新 `Stats` 与 `StatsOriginal`
+- 旧名 `addHarvestLevel` 是兼容别名
 
 参数：
 
@@ -529,12 +577,12 @@ mods.ticlib.TicTool.addHarvestLevel(stack as IItemStack, amount as int, token as
 - `true`：修改成功，或同 token 已应用
 - `false`：物品不适用、字段不存在、token 无效
 
-### `addDrawSpeed`
+### `patchDrawSpeed`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addDrawSpeed(stack as IItemStack, amount as float, token as string) as bool
+mods.ticlib.TicTool.patchDrawSpeed(stack as IItemStack, amount as float, token as string) as bool
 ```
 
 说明：
@@ -543,6 +591,7 @@ mods.ticlib.TicTool.addDrawSpeed(stack as IItemStack, amount as float, token as 
 - 当前语义是把原始 `DrawSpeed` 数值减去 `amount`
 - 最终结果最小值会钳制到 `0.01`
 - 同时更新 `Stats` 与 `StatsOriginal`
+- 旧名 `addDrawSpeed` 是兼容别名
 
 参数：
 
@@ -555,18 +604,19 @@ mods.ticlib.TicTool.addDrawSpeed(stack as IItemStack, amount as float, token as 
 - `true`：修改成功，或同 token 已应用
 - `false`：物品不适用、字段不存在、token 无效
 
-### `addAttackSpeedMultiplier`
+### `patchAttackSpeedMultiplier`
 
 签名：
 
 ```zenscript
-mods.ticlib.TicTool.addAttackSpeedMultiplier(stack as IItemStack, amount as float, token as string) as bool
+mods.ticlib.TicTool.patchAttackSpeedMultiplier(stack as IItemStack, amount as float, token as string) as bool
 ```
 
 说明：
 
 - 增加攻击速度倍率
 - 同时更新 `Stats` 与 `StatsOriginal`
+- 旧名 `addAttackSpeedMultiplier` 是兼容别名
 
 参数：
 
@@ -579,18 +629,18 @@ mods.ticlib.TicTool.addAttackSpeedMultiplier(stack as IItemStack, amount as floa
 - `true`：修改成功，或同 token 已应用
 - `false`：物品不适用、字段不存在、token 无效
 
-## Token 规则
+## 属性补丁 Token 规则
 
 说明：
 
-- `addMiningSpeed`
-- `addAttack`
-- `addFreeModifiers`
-- `addDefense`
-- `addToughness`
-- `addHarvestLevel`
-- `addDrawSpeed`
-- `addAttackSpeedMultiplier`
+- `patchMiningSpeed`
+- `patchAttack`
+- `patchFreeModifiers`
+- `patchDefense`
+- `patchToughness`
+- `patchHarvestLevel`
+- `patchDrawSpeed`
+- `patchAttackSpeedMultiplier`
 
 以上属性方法共用同一套防重复机制。
 
@@ -601,6 +651,7 @@ mods.ticlib.TicTool.addAttackSpeedMultiplier(stack as IItemStack, amount as floa
 - 重复调用不会再次叠加属性
 - 标记存储在物品根 NBT 的 `ticlib.applied_tokens`
 - 这部分数据不写入 TiC 原生统计字段
+- 旧 `add*` 属性方法使用同一套 token 规则
 
 ## 护甲缓存方法
 
@@ -750,10 +801,10 @@ if (TicTool.hasArmorTrait(player, "speed")) {
     print("player has speed");
 }
 
-TicTool.addMiningSpeed(stack, 2.0, "example_speed_bonus");
-TicTool.addFreeModifiers(stack, 1, "example_modifier_bonus");
+TicTool.patchMiningSpeed(stack, 2.0, "example_speed_bonus");
+TicTool.patchFreeModifiers(stack, 1, "example_modifier_bonus");
 
-val copy = TicTool.withTrait(<tconstruct:pickaxe>, "sharp", 0xff0000, 1);
+val copy = TicTool.withRegisteredTrait(<tconstruct:pickaxe>, "sharp", 0xff0000, 1);
 ```
 
 ## Java
@@ -778,8 +829,8 @@ if (TicToolStacks.isTicTool(stack)) {
     String[] materials = TicToolStacks.getMaterials(stack);
 }
 
-TicToolTraits.addTrait(stack, "sharp", 0xff0000, 1);
-TicToolStats.addMiningSpeed(stack, 2.0F, "example_token");
+TicToolTraits.applyRegisteredTrait(stack, "sharp", 0xff0000, 1);
+TicToolStats.patchMiningSpeed(stack, 2.0F, "example_token");
 
 String[] armorTraits = TicArmorTraitCache.INSTANCE.getArmorTraits(player);
 ```

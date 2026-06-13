@@ -53,6 +53,10 @@ public final class TicToolTraits {
     }
 
     public static boolean addTrait(ItemStack stack, String traitId, int color, int level) {
+        return applyRegisteredTrait(stack, traitId, color, level);
+    }
+
+    public static boolean applyRegisteredTrait(ItemStack stack, String traitId, int color, int level) {
         TraitHandle handle = resolveTrait(traitId);
         if (!TicToolStacks.isTicTarget(stack) || handle == null || hasTrait(stack, traitId)) {
             return false;
@@ -73,6 +77,10 @@ public final class TicToolTraits {
     }
 
     public static boolean removeTrait(ItemStack stack, String traitId) {
+        return removeRegisteredTrait(stack, traitId);
+    }
+
+    public static boolean removeRegisteredTrait(ItemStack stack, String traitId) {
         TraitHandle handle = resolveTrait(traitId);
         if (!TicToolStacks.isTicTarget(stack) || handle == null || !hasTrait(stack, traitId)) {
             return false;
@@ -93,20 +101,28 @@ public final class TicToolTraits {
     }
 
     public static ItemStack withTrait(ItemStack stack, String traitId, int color, int level) {
+        return withRegisteredTrait(stack, traitId, color, level);
+    }
+
+    public static ItemStack withRegisteredTrait(ItemStack stack, String traitId, int color, int level) {
         if (TicToolStacks.isEmpty(stack)) {
             return ItemStack.EMPTY;
         }
         ItemStack copy = stack.copy();
-        addTrait(copy, traitId, color, level);
+        applyRegisteredTrait(copy, traitId, color, level);
         return copy;
     }
 
     public static ItemStack withoutTrait(ItemStack stack, String traitId) {
+        return withoutRegisteredTrait(stack, traitId);
+    }
+
+    public static ItemStack withoutRegisteredTrait(ItemStack stack, String traitId) {
         if (TicToolStacks.isEmpty(stack)) {
             return ItemStack.EMPTY;
         }
         ItemStack copy = stack.copy();
-        removeTrait(copy, traitId);
+        removeRegisteredTrait(copy, traitId);
         return copy;
     }
 

@@ -183,8 +183,18 @@ public final class TicToolNbt {
             return true;
         }
         NBTTagCompound root = getOrCreateRoot(stack);
+        return addToken(root, token);
+    }
+
+    public static boolean addToken(NBTTagCompound root, String token) {
+        if (root == null || token == null || token.trim().isEmpty()) {
+            return false;
+        }
         NBTTagCompound ticlibData = root.getCompoundTag(TICLIB_ROOT);
         NBTTagList tokens = ticlibData.getTagList(APPLIED_TOKENS, 8);
+        if (stringListContains(tokens, token)) {
+            return true;
+        }
         tokens.appendTag(new NBTTagString(token));
         ticlibData.setTag(APPLIED_TOKENS, tokens);
         root.setTag(TICLIB_ROOT, ticlibData);

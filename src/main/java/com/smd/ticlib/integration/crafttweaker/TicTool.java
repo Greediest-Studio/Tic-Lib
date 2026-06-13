@@ -45,7 +45,7 @@ public final class TicTool {
     @ZenMethod
     public static IEntityEquipmentSlot getArmorSlot(IItemStack stack) {
         EntityEquipmentSlot slot = TicToolStacks.getArmorSlot(toStackCopy(stack));
-        return CraftTweakerMC.getIEntityEquipmentSlot(slot);
+        return slot == null ? null : CraftTweakerMC.getIEntityEquipmentSlot(slot);
     }
 
     @ZenMethod
@@ -75,22 +75,42 @@ public final class TicTool {
 
     @ZenMethod
     public static boolean addTrait(IItemStack stack, String traitId, int color, int level) {
-        return TicToolTraits.addTrait(toMutableStack(stack), traitId, color, level);
+        return applyRegisteredTrait(stack, traitId, color, level);
+    }
+
+    @ZenMethod
+    public static boolean applyRegisteredTrait(IItemStack stack, String traitId, int color, int level) {
+        return TicToolTraits.applyRegisteredTrait(toMutableStack(stack), traitId, color, level);
     }
 
     @ZenMethod
     public static boolean removeTrait(IItemStack stack, String traitId) {
-        return TicToolTraits.removeTrait(toMutableStack(stack), traitId);
+        return removeRegisteredTrait(stack, traitId);
+    }
+
+    @ZenMethod
+    public static boolean removeRegisteredTrait(IItemStack stack, String traitId) {
+        return TicToolTraits.removeRegisteredTrait(toMutableStack(stack), traitId);
     }
 
     @ZenMethod
     public static IItemStack withTrait(IItemStack stack, String traitId, int color, int level) {
-        return CraftTweakerMC.getIItemStack(TicToolTraits.withTrait(toStackCopy(stack), traitId, color, level));
+        return withRegisteredTrait(stack, traitId, color, level);
+    }
+
+    @ZenMethod
+    public static IItemStack withRegisteredTrait(IItemStack stack, String traitId, int color, int level) {
+        return CraftTweakerMC.getIItemStack(TicToolTraits.withRegisteredTrait(toStackCopy(stack), traitId, color, level));
     }
 
     @ZenMethod
     public static IItemStack withoutTrait(IItemStack stack, String traitId) {
-        return CraftTweakerMC.getIItemStack(TicToolTraits.withoutTrait(toStackCopy(stack), traitId));
+        return withoutRegisteredTrait(stack, traitId);
+    }
+
+    @ZenMethod
+    public static IItemStack withoutRegisteredTrait(IItemStack stack, String traitId) {
+        return CraftTweakerMC.getIItemStack(TicToolTraits.withoutRegisteredTrait(toStackCopy(stack), traitId));
     }
 
     @ZenMethod
@@ -100,42 +120,82 @@ public final class TicTool {
 
     @ZenMethod
     public static boolean addMiningSpeed(IItemStack stack, float amount, String token) {
-        return TicToolStats.addMiningSpeed(toMutableStack(stack), amount, token);
+        return patchMiningSpeed(stack, amount, token);
+    }
+
+    @ZenMethod
+    public static boolean patchMiningSpeed(IItemStack stack, float amount, String token) {
+        return TicToolStats.patchMiningSpeed(toMutableStack(stack), amount, token);
     }
 
     @ZenMethod
     public static boolean addAttack(IItemStack stack, float amount, String token) {
-        return TicToolStats.addAttack(toMutableStack(stack), amount, token);
+        return patchAttack(stack, amount, token);
+    }
+
+    @ZenMethod
+    public static boolean patchAttack(IItemStack stack, float amount, String token) {
+        return TicToolStats.patchAttack(toMutableStack(stack), amount, token);
     }
 
     @ZenMethod
     public static boolean addFreeModifiers(IItemStack stack, int amount, String token) {
-        return TicToolStats.addFreeModifiers(toMutableStack(stack), amount, token);
+        return patchFreeModifiers(stack, amount, token);
+    }
+
+    @ZenMethod
+    public static boolean patchFreeModifiers(IItemStack stack, int amount, String token) {
+        return TicToolStats.patchFreeModifiers(toMutableStack(stack), amount, token);
     }
 
     @ZenMethod
     public static boolean addDefense(IItemStack stack, float amount, String token) {
-        return TicToolStats.addDefense(toMutableStack(stack), amount, token);
+        return patchDefense(stack, amount, token);
+    }
+
+    @ZenMethod
+    public static boolean patchDefense(IItemStack stack, float amount, String token) {
+        return TicToolStats.patchDefense(toMutableStack(stack), amount, token);
     }
 
     @ZenMethod
     public static boolean addToughness(IItemStack stack, float amount, String token) {
-        return TicToolStats.addToughness(toMutableStack(stack), amount, token);
+        return patchToughness(stack, amount, token);
+    }
+
+    @ZenMethod
+    public static boolean patchToughness(IItemStack stack, float amount, String token) {
+        return TicToolStats.patchToughness(toMutableStack(stack), amount, token);
     }
 
     @ZenMethod
     public static boolean addHarvestLevel(IItemStack stack, int amount, String token) {
-        return TicToolStats.addHarvestLevel(toMutableStack(stack), amount, token);
+        return patchHarvestLevel(stack, amount, token);
+    }
+
+    @ZenMethod
+    public static boolean patchHarvestLevel(IItemStack stack, int amount, String token) {
+        return TicToolStats.patchHarvestLevel(toMutableStack(stack), amount, token);
     }
 
     @ZenMethod
     public static boolean addDrawSpeed(IItemStack stack, float amount, String token) {
-        return TicToolStats.addDrawSpeed(toMutableStack(stack), amount, token);
+        return patchDrawSpeed(stack, amount, token);
+    }
+
+    @ZenMethod
+    public static boolean patchDrawSpeed(IItemStack stack, float amount, String token) {
+        return TicToolStats.patchDrawSpeed(toMutableStack(stack), amount, token);
     }
 
     @ZenMethod
     public static boolean addAttackSpeedMultiplier(IItemStack stack, float amount, String token) {
-        return TicToolStats.addAttackSpeedMultiplier(toMutableStack(stack), amount, token);
+        return patchAttackSpeedMultiplier(stack, amount, token);
+    }
+
+    @ZenMethod
+    public static boolean patchAttackSpeedMultiplier(IItemStack stack, float amount, String token) {
+        return TicToolStats.patchAttackSpeedMultiplier(toMutableStack(stack), amount, token);
     }
 
     @ZenMethod

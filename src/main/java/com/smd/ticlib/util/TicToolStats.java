@@ -30,26 +30,50 @@ public final class TicToolStats {
     }
 
     public static boolean addMiningSpeed(ItemStack stack, float amount, String token) {
+        return patchMiningSpeed(stack, amount, token);
+    }
+
+    public static boolean patchMiningSpeed(ItemStack stack, float amount, String token) {
         return addFloatToolStat(stack, Tags.MININGSPEED, amount, token);
     }
 
     public static boolean addAttack(ItemStack stack, float amount, String token) {
+        return patchAttack(stack, amount, token);
+    }
+
+    public static boolean patchAttack(ItemStack stack, float amount, String token) {
         return addFloatToolStat(stack, Tags.ATTACK, amount, token);
     }
 
     public static boolean addFreeModifiers(ItemStack stack, int amount, String token) {
+        return patchFreeModifiers(stack, amount, token);
+    }
+
+    public static boolean patchFreeModifiers(ItemStack stack, int amount, String token) {
         return addIntToolStat(stack, Tags.FREE_MODIFIERS, amount, token);
     }
 
     public static boolean addHarvestLevel(ItemStack stack, int amount, String token) {
+        return patchHarvestLevel(stack, amount, token);
+    }
+
+    public static boolean patchHarvestLevel(ItemStack stack, int amount, String token) {
         return addIntToolStat(stack, Tags.HARVESTLEVEL, amount, token);
     }
 
     public static boolean addAttackSpeedMultiplier(ItemStack stack, float amount, String token) {
+        return patchAttackSpeedMultiplier(stack, amount, token);
+    }
+
+    public static boolean patchAttackSpeedMultiplier(ItemStack stack, float amount, String token) {
         return addFloatToolStat(stack, Tags.ATTACKSPEEDMULTIPLIER, amount, token);
     }
 
     public static boolean addDrawSpeed(ItemStack stack, float amount, String token) {
+        return patchDrawSpeed(stack, amount, token);
+    }
+
+    public static boolean patchDrawSpeed(ItemStack stack, float amount, String token) {
         if (!canApply(stack, Tags.DRAWSPEED, token) || TicToolStacks.isTicArmor(stack)) {
             return false;
         }
@@ -66,12 +90,16 @@ public final class TicToolStats {
         original.setFloat(Tags.DRAWSPEED, value);
         TagUtil.setToolTag(root, stats);
         root.setTag(Tags.TOOL_DATA_ORIG, original);
-        TicToolNbt.addToken(stack, token);
+        TicToolNbt.addToken(root, token);
         stack.setTagCompound(root);
         return true;
     }
 
     public static boolean addDefense(ItemStack stack, float amount, String token) {
+        return patchDefense(stack, amount, token);
+    }
+
+    public static boolean patchDefense(ItemStack stack, float amount, String token) {
         if (!canApply(stack, ArmorTagUtil.DEFENSE, token) || !TicToolStacks.isTicArmor(stack)) {
             return false;
         }
@@ -96,12 +124,16 @@ public final class TicToolStats {
         original.write(originalTag);
         TagUtil.setToolTag(root, statsTag);
         root.setTag(Tags.TOOL_DATA_ORIG, originalTag);
-        TicToolNbt.addToken(stack, token);
+        TicToolNbt.addToken(root, token);
         stack.setTagCompound(root);
         return true;
     }
 
     public static boolean addToughness(ItemStack stack, float amount, String token) {
+        return patchToughness(stack, amount, token);
+    }
+
+    public static boolean patchToughness(ItemStack stack, float amount, String token) {
         if (TicToolStacks.isTicArmor(stack)) {
             if (!canApply(stack, ArmorTagUtil.TOUGHNESS, token)) {
                 return false;
@@ -121,11 +153,11 @@ public final class TicToolStats {
             original.write(originalTag);
             TagUtil.setToolTag(root, statsTag);
             root.setTag(Tags.TOOL_DATA_ORIG, originalTag);
-            TicToolNbt.addToken(stack, token);
+            TicToolNbt.addToken(root, token);
             stack.setTagCompound(root);
             return true;
         }
-        return addFloatToolStat(stack, "Toughness", amount, token);
+        return false;
     }
 
     private static boolean addFloatToolStat(ItemStack stack, String statName, float amount, String token) {
@@ -147,7 +179,7 @@ public final class TicToolStats {
         original.write(originalTag);
         TagUtil.setToolTag(root, statsTag);
         root.setTag(Tags.TOOL_DATA_ORIG, originalTag);
-        TicToolNbt.addToken(stack, token);
+        TicToolNbt.addToken(root, token);
         stack.setTagCompound(root);
         return true;
     }
@@ -171,7 +203,7 @@ public final class TicToolStats {
         original.write(originalTag);
         TagUtil.setToolTag(root, statsTag);
         root.setTag(Tags.TOOL_DATA_ORIG, originalTag);
-        TicToolNbt.addToken(stack, token);
+        TicToolNbt.addToken(root, token);
         stack.setTagCompound(root);
         return true;
     }
@@ -201,8 +233,6 @@ public final class TicToolStats {
                 break;
             case Tags.ATTACKSPEEDMULTIPLIER:
                 stats.attackSpeedMultiplier += amount;
-                break;
-            case "Toughness":
                 break;
             default:
                 break;
