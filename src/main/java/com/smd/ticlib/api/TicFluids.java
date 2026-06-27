@@ -1,7 +1,9 @@
 package com.smd.ticlib.api;
 
-import com.smd.ticlib.module.fluid.FluidHandler;
-import com.smd.ticlib.module.fluid.FluidModule;
+import com.smd.ticlib.core.state.TicStackState;
+import com.smd.ticlib.module.fluid.TicFluidAccess;
+import com.smd.ticlib.module.fluid.TicFluidOperationResult;
+import com.smd.ticlib.module.fluid.TicFluidTankView;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.EnumFacing;
@@ -19,48 +21,68 @@ public final class TicFluids {
     private TicFluids() {
     }
 
+    public static TicFluidAccess of(ItemStack stack) {
+        return new TicFluidAccess(TicStackState.of(stack));
+    }
+
     public static boolean hasTank(ItemStack stack) {
-        return FluidModule.INSTANCE.hasTank(stack);
+        return of(stack).hasAnyTank();
     }
 
     public static IFluidTankProperties[] getTankProperties(ItemStack stack) {
-        return hasTank(stack) ? new FluidHandler(stack).getTankProperties() : new IFluidTankProperties[0];
+        return of(stack).tankProperties();
+    }
+
+    public static TicFluidTankView[] getTanks(ItemStack stack) {
+        return of(stack).tanks();
     }
 
     public static int getCapacity(ItemStack stack) {
-        return FluidModule.INSTANCE.getCapacity(stack);
+        return of(stack).primaryCapacity();
     }
 
     public static boolean setCapacity(ItemStack stack, int capacity) {
-        return FluidModule.INSTANCE.setCapacity(stack, capacity);
+        return of(stack).setPrimaryCapacity(capacity);
     }
 
     @Nullable
     public static FluidStack getFluid(ItemStack stack) {
-        return FluidModule.INSTANCE.getFluid(stack);
+        return of(stack).primaryFluid();
     }
 
     @Nullable
     public static FluidStack setFluid(ItemStack stack, @Nullable FluidStack fluid) {
-        return FluidModule.INSTANCE.setFluid(stack, fluid);
+        return of(stack).setPrimaryFluid(fluid);
     }
 
     public static boolean clearFluid(ItemStack stack) {
-        return setFluid(stack, null) == null;
+        return of(stack).clearPrimaryFluid();
     }
 
     public static int fill(ItemStack stack, FluidStack resource, boolean doFill) {
-        return FluidModule.INSTANCE.fill(stack, resource, doFill);
+        return of(stack).fill(resource, doFill).amount();
+    }
+
+    public static TicFluidOperationResult fillDetailed(ItemStack stack, FluidStack resource, boolean doFill) {
+        return of(stack).fill(resource, doFill);
     }
 
     @Nullable
     public static FluidStack drain(ItemStack stack, FluidStack resource, boolean doDrain) {
-        return FluidModule.INSTANCE.drain(stack, resource, doDrain);
+        return of(stack).drain(resource, doDrain).fluid();
+    }
+
+    public static TicFluidOperationResult drainDetailed(ItemStack stack, FluidStack resource, boolean doDrain) {
+        return of(stack).drain(resource, doDrain);
     }
 
     @Nullable
     public static FluidStack drain(ItemStack stack, int maxDrain, boolean doDrain) {
-        return FluidModule.INSTANCE.drain(stack, maxDrain, doDrain);
+        return of(stack).drain(maxDrain, doDrain).fluid();
+    }
+
+    public static TicFluidOperationResult drainDetailed(ItemStack stack, int maxDrain, boolean doDrain) {
+        return of(stack).drain(maxDrain, doDrain);
     }
 
     public static boolean interactWithFluidHandler(EntityPlayer player, EnumHand hand, World world, BlockPos pos, EnumFacing side) {

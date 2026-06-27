@@ -47,7 +47,8 @@ if (TicItems.isTool(stack)) {
 TicStats.add(stack, "MiningSpeed", 2.0D, "bonus_speed");
 TicStats.add(stack, "FreeModifiers", 1.0D, "bonus_slot");
 TicTraits.addRegisteredTrait(stack, "sharp", 0xffffff, 1);
-TicFluids.setCapacity(stack, 1000);
+TicFluids.of(stack).setPrimaryCapacity(1000);
+TicFluids.of(stack).setPrimaryFluid(new FluidStack(FluidRegistry.WATER, 500));
 
 String[] armorTraits = TicArmor.getTraits(player);
 ```
@@ -109,17 +110,21 @@ mods.ticlib.TicTool.addStat(stack as IItemStack, statName as string, amount as f
 ## 流体容器
 
 ```zenscript
+mods.ticlib.TicTool.hasAnyFluidTank(stack as IItemStack) as bool
 mods.ticlib.TicTool.getFluidCapacity(stack as IItemStack) as int
 mods.ticlib.TicTool.setFluidCapacity(stack as IItemStack, capacity as int) as bool
 mods.ticlib.TicTool.getFluidAmount(stack as IItemStack) as int
 mods.ticlib.TicTool.getFluidName(stack as IItemStack) as string
 mods.ticlib.TicTool.clearFluid(stack as IItemStack) as bool
+mods.ticlib.TicTool.fillFluid(stack as IItemStack, fluidName as string, amount as int, doFill as bool) as int
 ```
 
 说明：
 
 - 支持 TiC 工具和 ConArm 盔甲。
 - 容量大于 0 的物品会暴露 Forge `FLUID_HANDLER_ITEM_CAPABILITY`。
+- Java 侧推荐入口改为 `TicFluids.of(stack)`，它会返回 `TicFluidAccess`。
+- `TicFluidAccess` 提供 `primaryCapacity()`、`primaryFluid()`、`setPrimaryCapacity()`、`setPrimaryFluid()`、`tanks()`、`modifierTanks()`、`fill()`、`drain()`。
 - 不默认拦截工具右键方块；世界交互由 Java 侧显式调用 `TicFluids.interactWithFluidHandler`。
 
 ## 构建事件

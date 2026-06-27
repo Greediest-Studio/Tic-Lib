@@ -55,6 +55,16 @@ public final class TicDataAccess {
         return data;
     }
 
+    public int dataVersion() {
+        NBTTagCompound data = data();
+        return data == null ? 0 : data.getInteger(DATA_VERSION);
+    }
+
+    public int dirtyVersion() {
+        NBTTagCompound data = data();
+        return data == null ? 0 : data.getInteger(DIRTY_VERSION);
+    }
+
     public NBTTagCompound component(String id) {
         NBTTagCompound data = data();
         if (data == null || id == null || id.trim().isEmpty() || !data.hasKey(COMPONENTS, Constants.NBT.TAG_COMPOUND)) {

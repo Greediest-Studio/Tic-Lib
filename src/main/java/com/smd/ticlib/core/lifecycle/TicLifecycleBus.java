@@ -57,6 +57,24 @@ public final class TicLifecycleBus {
         replay(newStack);
     }
 
+    public static boolean copyPersistentData(ItemStack oldStack, ItemStack newStack) {
+        TicTarget oldTarget = TicTargets.resolve(oldStack);
+        TicTarget newTarget = TicTargets.resolve(newStack);
+        if (!oldTarget.isValid() || !newTarget.isValid() || oldTarget.kind() != newTarget.kind()) {
+            return false;
+        }
+        TicDataAccess.copyData(oldStack, newStack);
+        TicLifecycleContext oldContext = TicLifecycleContext.forStack(oldTarget);
+        TicLifecycleContext newContext = TicLifecycleContext.forStack(newTarget);
+        for (TicModule module : MODULES) {
+            if (module.supports(newTarget.kind())) {
+                module.onCopy(oldContext, newContext);
+            }
+        }
+        newContext.commit();
+        return true;
+    }
+
     public static void replay(ItemStack stack) {
         TicTarget target = TicTargets.resolve(stack);
         if (!target.isValid()) {

@@ -1,8 +1,7 @@
 package com.smd.ticlib.api;
 
 import com.smd.ticlib.core.nbt.TicNbt;
-import com.smd.ticlib.core.target.TicTarget;
-import com.smd.ticlib.core.target.TicTargets;
+import com.smd.ticlib.core.state.TicStackState;
 import com.smd.ticlib.core.tconstruct.TicNativeAccess;
 import com.smd.ticlib.module.stats.PersistentStatsModule;
 import net.minecraft.item.ItemStack;
@@ -15,14 +14,14 @@ public final class TicStats {
     }
 
     public static boolean setBroken(ItemStack stack, boolean broken) {
-        TicTarget target = TicTargets.resolve(stack);
-        if (!target.isValid()) {
+        TicStackState state = TicStackState.of(stack);
+        if (state == null) {
             return false;
         }
-        NBTTagCompound stats = target.nativeAccess().stats().copy();
+        NBTTagCompound stats = state.nativeAccess().stats().copy();
         stats.setBoolean(Tags.BROKEN, broken);
-        target.nativeAccess().setStats(stats);
-        stack.setTagCompound(target.writableRoot());
+        state.nativeAccess().setStats(stats);
+        state.commit();
         return true;
     }
 

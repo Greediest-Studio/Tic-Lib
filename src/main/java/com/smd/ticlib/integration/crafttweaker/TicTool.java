@@ -5,6 +5,8 @@ import com.smd.ticlib.api.TicFluids;
 import com.smd.ticlib.api.TicItems;
 import com.smd.ticlib.api.TicStats;
 import com.smd.ticlib.api.TicTraits;
+import com.smd.ticlib.module.fluid.TicFluidAccess;
+import com.smd.ticlib.module.fluid.TicFluidOperationResult;
 import crafttweaker.annotations.ZenRegister;
 import crafttweaker.api.entity.IEntityEquipmentSlot;
 import crafttweaker.api.item.IItemStack;
@@ -147,29 +149,47 @@ public final class TicTool {
 
     @ZenMethod
     public static int getFluidCapacity(IItemStack stack) {
-        return TicFluids.getCapacity(toStackCopy(stack));
+        return TicFluids.of(toStackCopy(stack)).primaryCapacity();
     }
 
     @ZenMethod
     public static boolean setFluidCapacity(IItemStack stack, int capacity) {
-        return TicFluids.setCapacity(toMutableStack(stack), capacity);
+        return TicFluids.of(toMutableStack(stack)).setPrimaryCapacity(capacity);
     }
 
     @ZenMethod
     public static int getFluidAmount(IItemStack stack) {
-        FluidStack fluid = TicFluids.getFluid(toStackCopy(stack));
+        FluidStack fluid = TicFluids.of(toStackCopy(stack)).primaryFluid();
         return fluid == null ? 0 : fluid.amount;
     }
 
     @ZenMethod
     public static String getFluidName(IItemStack stack) {
-        FluidStack fluid = TicFluids.getFluid(toStackCopy(stack));
+        FluidStack fluid = TicFluids.of(toStackCopy(stack)).primaryFluid();
         return fluid == null || fluid.getFluid() == null ? "" : fluid.getFluid().getName();
     }
 
     @ZenMethod
     public static boolean clearFluid(IItemStack stack) {
-        return TicFluids.clearFluid(toMutableStack(stack));
+        return TicFluids.of(toMutableStack(stack)).clearPrimaryFluid();
+    }
+
+    @ZenMethod
+    public static boolean hasAnyFluidTank(IItemStack stack) {
+        return TicFluids.of(toStackCopy(stack)).hasAnyTank();
+    }
+
+    @ZenMethod
+    public static int fillFluid(IItemStack stack, String fluidName, int amount, boolean doFill) {
+        if (fluidName == null || fluidName.trim().isEmpty() || amount <= 0) {
+            return 0;
+        }
+        net.minecraftforge.fluids.Fluid fluid = net.minecraftforge.fluids.FluidRegistry.getFluid(fluidName);
+        if (fluid == null) {
+            return 0;
+        }
+        TicFluidOperationResult result = TicFluids.of(toMutableStack(stack)).fill(new FluidStack(fluid, amount), doFill);
+        return result.amount();
     }
 
     @ZenMethod

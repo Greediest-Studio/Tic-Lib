@@ -134,19 +134,24 @@ public final class ItemStackExpansion {
 
     @ZenMethod
     public static int getFluidCapacity(IItemStack stack) {
-        return TicFluids.getCapacity(toStackCopy(stack));
+        return TicFluids.of(toStackCopy(stack)).primaryCapacity();
     }
 
     @ZenMethod
     public static int getFluidAmount(IItemStack stack) {
-        FluidStack fluid = TicFluids.getFluid(toStackCopy(stack));
+        FluidStack fluid = TicFluids.of(toStackCopy(stack)).primaryFluid();
         return fluid == null ? 0 : fluid.amount;
     }
 
     @ZenMethod
     public static String getFluidName(IItemStack stack) {
-        FluidStack fluid = TicFluids.getFluid(toStackCopy(stack));
+        FluidStack fluid = TicFluids.of(toStackCopy(stack)).primaryFluid();
         return fluid == null || fluid.getFluid() == null ? "" : fluid.getFluid().getName();
+    }
+
+    @ZenMethod
+    public static boolean hasAnyFluidTank(IItemStack stack) {
+        return TicFluids.of(toStackCopy(stack)).hasAnyTank();
     }
 
     // ===================== 链式修改（返回新物品，不影响原物品） =====================
@@ -197,14 +202,14 @@ public final class ItemStackExpansion {
     @ZenMethod
     public static IItemStack withFluidCapacity(IItemStack stack, int capacity) {
         ItemStack copy = toStackCopy(stack).copy();
-        boolean success = TicFluids.setCapacity(copy, capacity);
+        boolean success = TicFluids.of(copy).setPrimaryCapacity(capacity);
         return success ? CraftTweakerMC.getIItemStack(copy) : stack;
     }
 
     @ZenMethod
     public static IItemStack withoutFluid(IItemStack stack) {
         ItemStack copy = toStackCopy(stack).copy();
-        boolean success = TicFluids.clearFluid(copy);
+        boolean success = TicFluids.of(copy).clearPrimaryFluid();
         return success ? CraftTweakerMC.getIItemStack(copy) : stack;
     }
 

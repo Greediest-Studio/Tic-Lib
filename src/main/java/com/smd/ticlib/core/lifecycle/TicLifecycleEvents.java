@@ -26,6 +26,11 @@ public final class TicLifecycleEvents {
     }
 
     @SubscribeEvent
+    public void onArmorRepaired(ArmoryEvent.OnRepair event) {
+        TicLifecycleBus.replay(event.itemStack);
+    }
+
+    @SubscribeEvent
     public void onToolCrafted(TinkerCraftingEvent.ToolCraftingEvent event) {
         TicLifecycleBus.replay(event.getItemStack());
     }

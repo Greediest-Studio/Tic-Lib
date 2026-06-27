@@ -4,14 +4,11 @@ import com.smd.ticlib.core.data.TicDataAccess;
 import com.smd.ticlib.core.lifecycle.TicLifecycleContext;
 import com.smd.ticlib.core.lifecycle.TicModule;
 import com.smd.ticlib.core.nbt.TicNbt;
-import com.smd.ticlib.core.target.TicTarget;
 import com.smd.ticlib.core.target.TicTargetKind;
-import com.smd.ticlib.core.target.TicTargets;
+import com.smd.ticlib.core.state.TicStackState;
 import com.smd.ticlib.core.tconstruct.TicNativeAccess;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
-import net.minecraft.nbt.NBTTagString;
 import net.minecraftforge.common.util.Constants;
 
 public final class PersistentStatsModule implements TicModule {
@@ -20,7 +17,7 @@ public final class PersistentStatsModule implements TicModule {
     public static final String ID = "ticlib:stats";
 
     private static final String BONUSES = "Bonuses";
-    private static final String TOKENS = "Tokens";
+    private static final String APPLIED_TOKENS = "AppliedTokens";
 
     private PersistentStatsModule() {
     }
@@ -46,39 +43,39 @@ public final class PersistentStatsModule implements TicModule {
     }
 
     public String[] getStats(ItemStack stack) {
-        TicTarget target = TicTargets.resolve(stack);
-        if (!target.isValid()) {
+        TicStackState state = TicStackState.of(stack);
+        if (state == null) {
             return TicNbt.EMPTY_STRINGS;
         }
-        return target.nativeAccess().getStatNames();
+        return state.nativeAccess().getStatNames();
     }
 
     public boolean hasStat(ItemStack stack, String statName) {
-        TicTarget target = TicTargets.resolve(stack);
-        return target.isValid() && target.nativeAccess().hasNumericStat(statName);
+        TicStackState state = TicStackState.of(stack);
+        return state != null && state.nativeAccess().hasNumericStat(statName);
     }
 
     public float getFloat(ItemStack stack, String statName) {
-        return hasStat(stack, statName) ? TicTargets.resolve(stack).nativeAccess().stats().getFloat(statName) : 0.0F;
+        TicStackState state = TicStackState.of(stack);
+        return state != null && state.nativeAccess().hasNumericStat(statName) ? state.nativeAccess().stats().getFloat(statName) : 0.0F;
     }
 
     public int getInt(ItemStack stack, String statName) {
-        return hasStat(stack, statName) ? TicTargets.resolve(stack).nativeAccess().stats().getInteger(statName) : 0;
+        TicStackState state = TicStackState.of(stack);
+        return state != null && state.nativeAccess().hasNumericStat(statName) ? state.nativeAccess().stats().getInteger(statName) : 0;
     }
 
     public boolean add(ItemStack stack, String statName, double amount, String token) {
-        TicTarget target = TicTargets.resolve(stack);
-        if (!target.isValid() || token == null || token.trim().isEmpty()) {
+        TicStackState state = TicStackState.of(stack);
+        if (state == null || token == null || token.trim().isEmpty()) {
             return false;
         }
-        TicNativeAccess nativeAccess = target.nativeAccess();
+        TicNativeAccess nativeAccess = state.nativeAccess();
         if (!nativeAccess.hasNumericStat(statName)) {
             return false;
         }
-        TicDataAccess data = target.data();
-        NBTTagCompound component = data.writableComponent(ID);
+        NBTTagCompound component = state.writableComponent(ID);
         if (hasToken(component, token)) {
-            data.commit();
             return true;
         }
 
@@ -88,8 +85,8 @@ public final class PersistentStatsModule implements TicModule {
         addToken(component, token);
 
         nativeAccess.addNumericStat(statName, amount);
-        data.markDirty();
-        data.commit();
+        state.markDirty();
+        state.commit();
         return true;
     }
 
@@ -115,18 +112,13 @@ public final class PersistentStatsModule implements TicModule {
     }
 
     private static boolean hasToken(NBTTagCompound component, String token) {
-        NBTTagList tokens = component.getTagList(TOKENS, Constants.NBT.TAG_STRING);
-        for (int i = 0; i < tokens.tagCount(); i++) {
-            if (token.equals(tokens.getStringTagAt(i))) {
-                return true;
-            }
-        }
-        return false;
+        return component.hasKey(APPLIED_TOKENS, Constants.NBT.TAG_COMPOUND)
+                && component.getCompoundTag(APPLIED_TOKENS).hasKey(token);
     }
 
     private static void addToken(NBTTagCompound component, String token) {
-        NBTTagList tokens = component.getTagList(TOKENS, Constants.NBT.TAG_STRING);
-        tokens.appendTag(new NBTTagString(token));
-        component.setTag(TOKENS, tokens);
+        NBTTagCompound tokens = component.getCompoundTag(APPLIED_TOKENS);
+        tokens.setDouble(token, 1.0D);
+        component.setTag(APPLIED_TOKENS, tokens);
     }
 }
